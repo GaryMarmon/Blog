@@ -12,7 +12,7 @@ output:
 
 
 ---
-title: "Ch 5 Matrix Methods"
+title: "Matrix Regression Example in R"
 output: html_document
 ---
 
@@ -261,8 +261,7 @@ s_squared
 > $s^2(b_1)$ = 7.165069e-06  
 
 
-Distill is a publication format for scientific and technical writing, native to the web.
 
-Learn more about using Distill at <https://rstudio.github.io/distill>.
+
 
 
