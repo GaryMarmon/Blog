@@ -1,5 +1,22 @@
 [
   {
+    "path": "posts/2021-07-25-matrix-regression-example-in-r/",
+    "title": "Matrix Regression Example in R",
+    "description": "A short linear regression problem done using matrix methods in R",
+    "author": [
+      {
+        "name": "Gary Marmon",
+        "url": {}
+      }
+    ],
+    "date": "2021-07-25",
+    "categories": [],
+    "contents": "\r\nUsing the Age-Weight Data from CH05 Problem 1\r\n\r\n\r\ndf <- read.csv(\"Data/CH05Q01.csv\")\r\nY <- df %>% pull(\"LOGDRYWG\")\r\nx <- df %>% pull(\"AGE\")\r\nX <- rep(1, 11)\r\n\r\nX <- data.matrix(X, rownames.force = NA)\r\nX <- cbind(X, x)\r\nY <- data.matrix(Y, rownames.force = NA)\r\n\r\n\r\n\r\nOur normal regression model:\r\n\r\n\\(Y_i\\) = \\(\\beta_0\\) + \\(\\beta_1X_i\\) + \\(\\epsilon_i\\)\r\n\r\nWe can define our vectors as such\r\n\\[\\begin{align}\r\nY = \\begin{bmatrix}Y_1 \\\\ Y_2 \\\\ Y_3 \\\\ Y_4 \\\\ \\vdots \\\\ Y_n \\end{bmatrix}\r\nX = \\begin{bmatrix}1 & X_1 \\\\ 1 & X_2 \\\\ 1 & X_3  \\\\ \\vdots & \\vdots \\\\ 1 & X_n \\end{bmatrix}\r\n\\beta = \\begin{bmatrix}\\beta_0 \\\\ \\beta_1\\end{bmatrix}\r\n\\epsilon = \\begin{bmatrix}\\epsilon_1 \\\\ \\epsilon_2 \\\\ \\epsilon_3 \\\\ \\vdots \\\\ \\epsilon_n\\end{bmatrix}\r\n\\end{align}\\]\r\n\r\nWe created our X and Y observation vectors above\r\n\\[\\begin{align}\r\nY = \\begin{bmatrix}-1.538 \\\\ -1.284 \\\\ -1.102 \\\\ -0.903 \\\\ \\vdots \\\\ 0.449 \\end{bmatrix}\r\nX = \\begin{bmatrix}1 & 6 \\\\ 1 & 7 \\\\ 1 & 8  \\\\ \\vdots & \\vdots \\\\ 1 & 16 \\end{bmatrix}\r\n\\end{align}\\]\r\n\r\nWe can simplify our regression model in matrix terms:\r\n\r\n\r\n\\(Y\\) = \\(X\\) \\(\\beta\\) + \\(\\epsilon\\)\r\n\r\n\r\nLeast Squares Estimation of Regression Parameters\r\nThe normal equations in matrix form:\r\n\r\n\\(X^TX\\) \\(b\\) = \\(X^T\\)\\(Y\\)\r\n\r\nwhere b is the vector of the least squares regression coefficients:\r\n\\[\\begin{align}\r\nb = \\begin{bmatrix}\\beta_0 \\\\ \\beta_1\\end{bmatrix}\r\n\\end{align}\\]\r\n\\[\\begin{align}\r\nX^TX = \\begin{bmatrix}1 & 1 & 1 & \\dots & 1 \\\\ \r\n                     6 & 7 & 8 & \\dots & 16 \\end{bmatrix}\r\n      \\begin{bmatrix}1 & 6 \\\\ 1 & 7 \\\\ 1 & 8  \\\\ \\vdots & \\vdots \\\\ 1 & 16 \\end{bmatrix} \\ \\ \\  \r\n\r\n\r\nX^TY = \\begin{bmatrix}1 & 1 & 1 & \\dots & 1 \\\\ \r\n                     6 & 7 & 8 & \\dots & 16 \\end{bmatrix}\r\n      \\begin{bmatrix}-1.538 \\\\ -1.284 \\\\ -1.102 \\\\ -0.903 \\\\ \\vdots \\\\ 0.449 \\end{bmatrix}\r\n\\end{align}\\]\r\n\\(X^TX\\) =\r\n\r\n\r\nXpX <- t(X) %*% X\r\nXpX\r\n\r\n\r\n         x\r\n   11  121\r\nx 121 1441\r\n\r\n\\(X^TY\\) =\r\n\r\n\r\nXpY <- t(X) %*% Y\r\nXpY\r\n\r\n\r\n     [,1]\r\n   -5.879\r\nx -43.121\r\n\r\nnow we find the inverse of \\(X^TX\\)\r\n\\((X^TX)^{-1}\\) =\r\n\r\n\r\ninverseXpX <- solve(XpX)\r\ninverseXpX\r\n\r\n\r\n                       x\r\n   1.190909 -0.100000000\r\nx -0.100000  0.009090909\r\n\r\n\r\n\\[\\begin{align}\r\nb = \\begin{bmatrix}\\beta_0 \\\\ \\beta_1\\end{bmatrix} = (X^TX)^{-1}X^TY =\r\n\\end{align}\\]\r\n\r\n\r\n\r\nb <- inverseXpX %*% XpY\r\nb\r\n\r\n\r\n        [,1]\r\n  -2.6892545\r\nx  0.1958909\r\n\r\n\r\n\\(\\beta_0\\) = -2.6892545\r\n\r\n\r\n\\(\\beta_1\\) = 0.1958909\r\n\r\n\r\nY = -2.6892545 + 0.1958909X\r\n\r\nThis agrees with our analysis from problem one (taking into account rounding error):\r\n\r\nCI for \\(\\beta_0\\) : (-2.750529, -2.627981)\r\n\r\n\r\nCI for \\(\\beta_1\\) : (0.190537, 0.201245)\r\n\r\n\r\nZ = -2.689255 + 0.195891X\r\n\r\nFind \\(\\hat{Y}\\)\r\n\r\n\r\nmodel.predict <- function(x) {\r\n  pred <- 0\r\n  pred <- -2.6892545 + 0.1958909 * x\r\n  return(pred)\r\n}\r\n\r\ny_hats <- vector(\"list\", length(x))\r\nfor (val in x) {\r\n  y_hats[val-5] <- model.predict(val)\r\n}\r\n\r\n\r\n\r\n\r\n\\(\\hat{Y}\\) = \\(X\\)\\(b\\) =\r\n\r\n\r\n\r\ny_hat <- X %*% b\r\ny_hat\r\n\r\n\r\n             [,1]\r\n [1,] -1.51390909\r\n [2,] -1.31801818\r\n [3,] -1.12212727\r\n [4,] -0.92623636\r\n [5,] -0.73034545\r\n [6,] -0.53445455\r\n [7,] -0.33856364\r\n [8,] -0.14267273\r\n [9,]  0.05321818\r\n[10,]  0.24910909\r\n[11,]  0.44500000\r\n\r\nResiduals\r\nexpressed as a linear combination of the response variables observations \\(Y_1\\) and our results for \\(\\hat{Y}\\)\r\n\r\n\\(e\\) = \\(Y\\) - \\(\\hat{Y}\\) = \\(Y\\) - \\(X\\)\\(b\\)\r\n\r\n\r\n\r\ne <- Y - y_hat\r\ne\r\n\r\n\r\n               [,1]\r\n [1,] -0.0240909091\r\n [2,]  0.0340181818\r\n [3,]  0.0201272727\r\n [4,]  0.0232363636\r\n [5,] -0.0116545455\r\n [6,] -0.0485454545\r\n [7,] -0.0334363636\r\n [8,]  0.0106727273\r\n [9,] -0.0002181818\r\n[10,]  0.0258909091\r\n[11,]  0.0040000000\r\n\r\nequivalently, \\(\\hat{Y}\\) = \\(H\\) \\(Y\\)\r\n\\(H\\) is called the hat matrix, and only involves observations on the predictor variable \\(X\\)\r\n\r\n\\(H\\) = \\(X(X^TX)^{-1}X^T\\)\r\n\r\n\r\nSum of Squares in Matrix Form\r\n\r\n\\(SSE\\) = \\(Y^TY\\) - \\(b^TX^TY\\)\r\n\r\n\r\n\r\nlhs <- t(Y) %*% Y\r\nlhs\r\n\r\n\r\n         [,1]\r\n[1,] 7.370209\r\n\r\n\r\n\r\nrhs <- t(b) %*% XpY\r\nrhs\r\n\r\n\r\n         [,1]\r\n[1,] 7.363116\r\n\r\n\r\n\r\nsse <- lhs - rhs\r\nsse\r\n\r\n\r\n            [,1]\r\n[1,] 0.007093418\r\n\r\n\r\nThe Variance-Covariance matrix of b\r\n\r\n\\(\\sigma^2(b)\\) = \\(\\sigma^2(X^TX)^{-1}\\)\r\n\r\n\r\nThe (unbiased) estimate of the error variance \\(\\sigma^2\\) is \\(s^2\\) = \\(MSE\\) = \\(SSE / n - 2\\) where \\(MSE\\) is the Mean Squared Error.\r\n\r\n\r\nn <- 11\r\nmse <- sse / (n-2)\r\nmse <- mse[1]\r\nmse\r\n\r\n\r\n[1] 0.0007881576\r\n\r\nWhen \\(MSE\\) is substituted for \\(\\sigma^2\\), we obtain the estimated variance-covariance matrix of \\(b\\), denoted by \\(s^2(b)\\)\r\n\r\n\r\n\\(s^2(b)\\) = \\(MSE\\)\\((X^TX)^{-1}\\)\r\n\r\n\r\n\r\ns_squared <- mse * inverseXpX\r\ns_squared\r\n\r\n\r\n                            x\r\n   9.386240e-04 -7.881576e-05\r\nx -7.881576e-05  7.165069e-06\r\n\r\n\r\n\\(s^2(b_0)\\) = 9.386240e-04\\(s^2(b_1)\\) = 7.165069e-06\r\n\r\n\r\n\r\n\r\n",
+    "preview": {},
+    "last_modified": "2021-07-25T22:08:13-05:00",
+    "input_file": "matrix-regression-example-in-r.knit.md"
+  },
+  {
     "path": "posts/welcome/",
     "title": "Welcome to Portfolio",
     "description": "Welcome to our new blog, Portfolio. We hope you enjoy \nreading what we have to say!",
@@ -13,7 +30,7 @@
     "categories": [],
     "contents": "\r\n\r\n\r\n\r\n",
     "preview": {},
-    "last_modified": "2021-07-23T16:56:46-05:00",
-    "input_file": {}
+    "last_modified": "2021-07-25T21:43:59-05:00",
+    "input_file": "welcome.knit.md"
   }
 ]
