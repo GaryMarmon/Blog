@@ -1,0 +1,268 @@
+---
+title: "Matrix Regression Example in R"
+description: |
+  A short linear regression problem done using matrix methods in R
+author:
+  - name: Gary Marmon
+date: 07-25-2021
+output:
+  distill::distill_article:
+    self_contained: false
+---
+
+
+---
+title: "Ch 5 Matrix Methods"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(xtable)
+library(BSDA)
+```
+
+
+#### Using the Age-Weight Data from CH05 Problem 1
+```{r}
+df <- read.csv("Data/CH05Q01.csv")
+Y <- df %>% pull("LOGDRYWG")
+x <- df %>% pull("AGE")
+X <- rep(1, 11)
+
+X <- data.matrix(X, rownames.force = NA)
+X <- cbind(X, x)
+Y <- data.matrix(Y, rownames.force = NA)
+```
+
+#### Our normal regression model:
+
+> $Y_i$ = $\beta_0$ + $\beta_1X_i$ + $\epsilon_i$  
+
+  
+    
+    
+#### We can define our vectors as such
+
+
+\begin{align}
+Y = \begin{bmatrix}Y_1 \\ Y_2 \\ Y_3 \\ Y_4 \\ \vdots \\ Y_n \end{bmatrix}
+X = \begin{bmatrix}1 & X_1 \\ 1 & X_2 \\ 1 & X_3  \\ \vdots & \vdots \\ 1 & X_n \end{bmatrix}
+\beta = \begin{bmatrix}\beta_0 \\ \beta_1\end{bmatrix}
+\epsilon = \begin{bmatrix}\epsilon_1 \\ \epsilon_2 \\ \epsilon_3 \\ \vdots \\ \epsilon_n\end{bmatrix}
+\end{align}  
+
+<br>
+</br>  
+
+#### We created our X and Y observation vectors above
+\begin{align}
+Y = \begin{bmatrix}-1.538 \\ -1.284 \\ -1.102 \\ -0.903 \\ \vdots \\ 0.449 \end{bmatrix}
+X = \begin{bmatrix}1 & 6 \\ 1 & 7 \\ 1 & 8  \\ \vdots & \vdots \\ 1 & 16 \end{bmatrix}
+\end{align}    
+
+<br>
+</br>  
+
+  
+#### We can simplify our regression model in matrix terms:  
+ 
+<br>  
+
+> $Y$ = $X$  $\beta$ + $\epsilon$
+
+  
+<br>  
+
+## Least Squares Estimation of Regression Parameters    
+
+
+    
+                                    
+The normal equations in matrix form:  
+
+> $X^TX$ $b$ = $X^T$$Y$
+
+  
+    
+#### where b is the vector of the least squares regression coefficients:
+\begin{align}
+b = \begin{bmatrix}\beta_0 \\ \beta_1\end{bmatrix}
+\end{align}  
+  
+  
+\begin{align}
+X^TX = \begin{bmatrix}1 & 1 & 1 & \dots & 1 \\ 
+                     6 & 7 & 8 & \dots & 16 \end{bmatrix}
+      \begin{bmatrix}1 & 6 \\ 1 & 7 \\ 1 & 8  \\ \vdots & \vdots \\ 1 & 16 \end{bmatrix} \ \ \  
+
+
+X^TY = \begin{bmatrix}1 & 1 & 1 & \dots & 1 \\ 
+                     6 & 7 & 8 & \dots & 16 \end{bmatrix}
+      \begin{bmatrix}-1.538 \\ -1.284 \\ -1.102 \\ -0.903 \\ \vdots \\ 0.449 \end{bmatrix}
+\end{align}  
+
+
+
+$X^TX$ =  
+
+```{r}
+XpX <- t(X) %*% X
+XpX
+```
+
+$X^TY$ =
+```{r}
+XpY <- t(X) %*% Y
+XpY
+```
+
+now we find the inverse of $X^TX$  
+
+$(X^TX)^{-1}$ =
+
+```{r}
+inverseXpX <- solve(XpX)
+inverseXpX
+```
+
+>\begin{align}
+>b = \begin{bmatrix}\beta_0 \\ \beta_1\end{bmatrix} = (X^TX)^{-1}X^TY =
+>\end{align}
+
+```{r}
+b <- inverseXpX %*% XpY
+b
+```
+
+> $\beta_0$ = -2.6892545  
+
+
+> $\beta_1$ = 0.1958909  
+  
+> Y = -2.6892545 + 0.1958909X  
+
+  
+    
+      
+#### This agrees with our analysis from problem one (taking into account rounding error):  
+
+> CI for $\beta_0$ :
+  (-2.750529, -2.627981)  
+  
+
+> CI for $\beta_1$ :
+  (0.190537, 0.201245)   
+  
+> Z = -2.689255 + 0.195891X
+
+***
+
+Find $\hat{Y}$  
+
+
+```{r message=FALSE, warning=FALSE}
+model.predict <- function(x) {
+  pred <- 0
+  pred <- -2.6892545 + 0.1958909 * x
+  return(pred)
+}
+
+y_hats <- vector("list", length(x))
+for (val in x) {
+  y_hats[val-5] <- model.predict(val)
+}
+
+```
+***
+
+> $\hat{Y}$ = $X$$b$ = 
+
+```{r}
+y_hat <- X %*% b
+y_hat
+```
+
+  
+## Residuals
+
+expressed as a linear combination of the response variables observations $Y_1$ and our results for $\hat{Y}$  
+
+> $e$ = $Y$ - $\hat{Y}$ = $Y$ - $X$$b$  
+
+```{r}
+e <- Y - y_hat
+e
+```
+  
+
+equivalently, $\hat{Y}$ = $H$ $Y$  
+
+$H$ is called the hat matrix, and only involves observations on the predictor variable $X$  
+
+> $H$ = $X(X^TX)^{-1}X^T$  
+
+<br> 
+
+## Sum of Squares in Matrix Form
+ 
+> $SSE$ = $Y^TY$ - $b^TX^TY$   
+  
+```{r}
+lhs <- t(Y) %*% Y
+lhs
+```
+
+  
+```{r}
+rhs <- t(b) %*% XpY
+rhs
+```
+
+```{r}
+sse <- lhs - rhs
+sse
+```
+
+<br>  
+
+
+### The Variance-Covariance matrix of b
+
+> $\sigma^2(b)$ = $\sigma^2(X^TX)^{-1}$  
+
+<br>  
+
+
+The (unbiased) estimate of the error variance $\sigma^2$ is $s^2$ = $MSE$ = $SSE / n - 2$ where $MSE$ is the Mean Squared Error.
+
+```{r}
+n <- 11
+mse <- sse / (n-2)
+mse <- mse[1]
+mse
+```
+
+
+When $MSE$ is substituted for $\sigma^2$, we obtain the estimated variance-covariance matrix of $b$, denoted by $s^2(b)$  
+  
+<br>  
+
+> $s^2(b)$ = $MSE$$(X^TX)^{-1}$  
+
+
+```{r}
+s_squared <- mse * inverseXpX
+s_squared
+```
+
+> $s^2(b_0)$ = 9.386240e-04  
+> $s^2(b_1)$ = 7.165069e-06  
+
+
+Distill is a publication format for scientific and technical writing, native to the web.
+
+Learn more about using Distill at <https://rstudio.github.io/distill>.
+
+
